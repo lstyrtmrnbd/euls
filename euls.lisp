@@ -99,16 +99,16 @@
     (car (walk-into seq x))))
 
 (defun pollards-rho (n)
-  (loop for x-fixed = 2
-     for fac = 1
-     for x = 2
-     for cycle-size from 2 by (* cycle-size 2) do
-       (loop for count from 1 to cycle-size while (<= fac 1) do
-            (setf x (mod (+ 1 (* x x)) n))
-            (setf fac (gcd (- x x-fixed) n)))
-       (setf cycle-size (* 2 cycle-size))
-       (setf x-fixed x)
-     fac))
+  (let ((x 2) (y 2) (d 1))
+    (flet ((g (x) (mod (+ (* x x) 1)
+                       n)))
+      (loop while (= d 1) do
+           (setf x (g x))
+           (setf y (g (g y)))
+           (setf d (gcd (abs (- x y)) n)))
+      (if (/= d n)
+          d
+          nil))))
 
 ;; What is the largest prime factor of the number 600851475143 ?
 
