@@ -35,3 +35,50 @@
   (loop for i from 0 below (length arr)
      when (/= 0  (* i (aref arr i)))
      collect (* i (aref arr i))))
+
+(defun primes-below (n)
+  (parse-sieve (eratosthenes n)))
+
+;; floyd cycle detection in output of f
+;; maybe give comparison func as param
+(defun floyd-cycle (f x0)
+  (let ((lam 1)
+        (mu 0)
+        (tortoise (funcall f x0))
+        (hare (funcall f (funcall f x0))))
+    ;; main phase: find repetition x_i = x_2i
+    ;; eventually they will both be in the cycle,
+    ;; and their distance (nu) divisible by the period lam
+    (loop while (not (eql tortoise hare)) do
+         (setf tortoise (funcall f tortoise))
+         (setf hare (funcall f (funcall f hare))))
+    ;; tortoise position = distance between hare and tortoise
+    ;; and divisible by the period lam, distance between is
+    ;; now constant at 2nu, a multiple of lam
+    ;; when their values meet tortoise will be at cycle start mu
+    (setf tortoise x0)
+    (loop while (not (eql tortoise hare)) do
+         (setf tortoise (funcall f tortoise))
+         (setf hare (funcall f hare))
+         (setf mu (1+ mu)))
+    ;; find length of shortest cycle starting from x_mu
+    (setf hare (funcall f tortoise))
+    (loop while (not (eql tortoise hare)) do
+         (setf hare (funcall f hare))
+         (setf lam (1+ lam)))
+    (values lam mu)))
+
+(defun pollards-rho (n)
+  (loop for x-fixed = 2
+        for fac = 1
+        for x = 2
+        for cycle-size from 2 by (* cycle-size 2) do
+       (loop for count from 1 to cycle-size while (<= fac 1) do
+            (setf x (mod (+ 1 (* x x)) n))
+            (setf fac (gcd (- x x-fixed) n)))
+       (setf cycle-size (* 2 cycle-size))
+       (setf x-fixed x)
+       fac))
+
+;; What is the largest prime factor of the number 600851475143 ?
+
