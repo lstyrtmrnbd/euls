@@ -1,3 +1,6 @@
+;;;; Some of this is useful for Project Euler
+;;;; some of it is not at all
+
 ;; n times
 (defun sum-mod-3-5 (n)
   (loop for i below n do
@@ -68,17 +71,44 @@
          (setf lam (1+ lam)))
     (values lam mu)))
 
+;; setf *print-circle* t to prevent hang
+(defun make-circle (f lam &optional (mu 0))
+  (let ((lo (loop for i from mu below (+ lam mu) collect (funcall f i))))
+    (setf (cdr (last lo)) lo)))
+
+(defun make-rho (f lam mu &optional (x0 0))
+  "Append a circular list to a list resulting in a 'rho' shaped directive graph. lam: cycle period, mu: cycle start"
+  (let ((li (loop for i from x0 below mu collect (funcall f i))))
+    (setf (cdr (last li)) (make-circle f lam mu))
+    li))
+
+(defun walk-into (seq ctr)
+  (let ((ptr seq))
+    (loop for i from 1 to ctr do
+         (setf ptr (cdr ptr)))
+    ptr))
+
+(defun seq-walker (seq start)
+  (let ((ctr start))
+    (lambda ()
+      (setf ctr (1+ ctr))
+      (car (walk-into seq (1- ctr))))))
+
+(defun seq-rewalker (seq)
+  (lambda (x)
+    (car (walk-into seq x))))
+
 (defun pollards-rho (n)
   (loop for x-fixed = 2
-        for fac = 1
-        for x = 2
-        for cycle-size from 2 by (* cycle-size 2) do
+     for fac = 1
+     for x = 2
+     for cycle-size from 2 by (* cycle-size 2) do
        (loop for count from 1 to cycle-size while (<= fac 1) do
             (setf x (mod (+ 1 (* x x)) n))
             (setf fac (gcd (- x x-fixed) n)))
        (setf cycle-size (* 2 cycle-size))
        (setf x-fixed x)
-       fac))
+     fac))
 
 ;; What is the largest prime factor of the number 600851475143 ?
 
