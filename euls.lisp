@@ -3,10 +3,11 @@
 
 ;; n times
 (defun sum-mod-3-5 (n)
-  (loop for i below n do
-       (cond ((= 0 (mod i 3)) (setf result (+ result i)))
-             ((= 0 (mod i 5)) (setf result (+ result i)))
-             (t nil))))
+  (let ((result 0))
+    (loop for i below n do
+         (cond ((= 0 (mod i 3)) (setf result (+ result i)))
+               ((= 0 (mod i 5)) (setf result (+ result i)))))
+    result))
 
 ;; up to n
 (defun sum-even-fib (n)
@@ -42,6 +43,46 @@
 (defun primes-below (n)
   (parse-sieve (eratosthenes n)))
 
+(defun is-prime (n)
+  (not (null (member n (parse-sieve (eratosthenes (1+ n)))))))
+
+(defun num-to-list (n)
+  (map 'list (lambda (c)(or (digit-char-p c) '-)) (prin1-to-string n))) 
+
+(defun list-to-num (li)
+  (let ((result ""))
+    (loop for i from 0 below (length li) do
+         (setf result (concatenate 'string result (prin1-to-string (nth i li)))))
+    (values (parse-integer result))))
+
+;; don't call length on one of these ;-)
+(defun num-loop (nli)
+  "Returns a circular version of a list."
+  (let ((new-nli nli))
+    (setf (cdr (last new-nli)) new-nli)
+    new-nli))
+
+(defun rotate-number (n)
+  "Returns the number which is n's digits rotated one place to the left. Eg. 719 => 197"
+  (let* ((nli (num-to-list n))
+         (len (length nli))
+         (nlo (num-loop nli)))
+    (list-to-num (loop for i from 0 below len collect (nth (1+ i) nlo)))))
+
+(defun is-circular-prime (n)
+  (let ((rn n))
+    (loop for i from 1 to (length (num-to-list n)) do
+         (if (not (is-prime (rotate-number rn)))
+             (return-from is-circular-prime nil)
+             (setf rn (rotate-number rn))))
+    t))
+
+(defun circular-primes-below (n)
+  (loop for x in (primes-below n) when (is-circular-prime x) collect x))
+
+(defun car-times (count object)
+  (loop for i from 1 to count do (car object)))
+
 ;; floyd cycle detection in output of f
 ;; maybe give comparison func as param
 (defun floyd-cycle (f x0)
@@ -72,12 +113,14 @@
     (values lam mu)))
 
 ;; setf *print-circle* t to prevent hang
+;; don't call length on these bad boys, or try to push to it
 (defun make-circle (f lam &optional (mu 0))
   (let ((lo (loop for i from mu below (+ lam mu) collect (funcall f i))))
     (setf (cdr (last lo)) lo)))
 
 (defun make-rho (f lam mu &optional (x0 0))
-  "Append a circular list to a list resulting in a 'rho' shaped directive graph. lam: cycle period, mu: cycle start"
+  "Append a circular list to a list resulting in a 'rho' shaped directive graph. 
+   lam: cycle period, mu: cycle start"
   (let ((li (loop for i from x0 below mu collect (funcall f i))))
     (setf (cdr (last li)) (make-circle f lam mu))
     li))
