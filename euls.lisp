@@ -43,8 +43,10 @@
 (defun primes-below (n)
   (parse-sieve (eratosthenes n)))
 
-(defun is-prime (n)
-  (not (null (member n (parse-sieve (eratosthenes (1+ n)))))))
+(defun is-prime (n &optional list)
+  (not (null (member n (if (not (null list))
+                           list
+                           (parse-sieve (eratosthenes (1+ n))))))))
 
 (defun num-to-list (n)
   (map 'list (lambda (c)(or (digit-char-p c) '-)) (prin1-to-string n))) 
@@ -69,16 +71,17 @@
          (nlo (num-loop nli)))
     (list-to-num (loop for i from 0 below len collect (nth (1+ i) nlo)))))
 
-(defun is-circular-prime (n)
+(defun is-circular-prime (n &optional list)
   (let ((rn n))
     (loop for i from 1 to (length (num-to-list n)) do
-         (if (not (is-prime (rotate-number rn)))
+         (if (not (is-prime (rotate-number rn) list))
              (return-from is-circular-prime nil)
              (setf rn (rotate-number rn))))
     t))
 
 (defun circular-primes-below (n)
-  (loop for x in (primes-below n) when (is-circular-prime x) collect x))
+  (let ((primes (primes-below n)))
+    (loop for x in primes when (is-circular-prime x primes) collect x)))
 
 (defun car-times (count object)
   (loop for i from 1 to count do (car object)))
