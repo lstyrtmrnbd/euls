@@ -115,6 +115,28 @@
          (setf lam (1+ lam)))
     (values lam mu)))
 
+;; maybe could implement as function that fits into floyd-cycle for seq
+;; add an optional start position parameter?
+(defun floyd-seq (seq)
+  "Floyd cycle detect on a sequence."
+  (let ((lam 1)
+        (mu 0)
+        (tortoise (cdr seq))
+        (hare (cdr (cdr seq))))
+    (loop while (not (eql (car tortoise) (car hare))) do
+         (setf tortoise (cdr tortoise))
+         (setf hare (cdr (cdr hare))))
+    (setf tortoise seq)
+    (loop while (not (eql (car tortoise) (car hare))) do
+         (setf tortoise (cdr tortoise))
+         (setf hare (cdr hare))
+         (setf mu (1+ mu)))
+    (setf hare (cdr tortoise))
+    (loop while (not (eql (car tortoise) (car hare))) do
+         (setf hare (cdr hare))
+         (setf lam (1+ lam)))
+    (values lam mu)))
+
 ;; setf *print-circle* t to prevent hang
 ;; don't call length on these bad boys, or try to push to it
 (defun make-circle (f lam &optional (mu 0))
@@ -127,6 +149,10 @@
   (let ((li (loop for i from x0 below mu collect (funcall f i))))
     (setf (cdr (last li)) (make-circle f lam mu))
     li))
+
+(defun rho-func (rho)
+  (lambda (x)
+    (nth x rho)))
 
 (defun walk-into (seq ctr)
   (let ((ptr seq))
