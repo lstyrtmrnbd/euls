@@ -74,7 +74,7 @@
 (defun is-circular-prime (n &optional list)
   (let ((rn n))
     (loop for i from 1 to (length (num-to-list n)) do
-         (if (not (is-prime (rotate-number rn) list))
+         (if (not (is-prime rn list))
              (return-from is-circular-prime nil)
              (setf rn (rotate-number rn))))
     t))
