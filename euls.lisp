@@ -1,6 +1,8 @@
 ;;;; Some of this is useful for Project Euler
 ;;;; some of it is not at all
 
+;; The expression (values) returns zero values. This is the standard idiom for returning no values from a function.
+
 ;; n times
 (defun sum-mod-3-5 (n)
   (let ((result 0))
@@ -49,7 +51,7 @@
                            (parse-sieve (eratosthenes (1+ n))))))))
 
 (defun num-to-list (n)
-  (map 'list (lambda (c)(or (digit-char-p c) '-)) (prin1-to-string n))) 
+  (map 'list (lambda (c) (or (digit-char-p c) '-)) (prin1-to-string n))) 
 
 (defun list-to-num (li)
   (let ((result ""))
@@ -115,7 +117,7 @@
          (setf lam (1+ lam)))
     (values lam mu)))
 
-;; maybe could implement as function that fits into floyd-cycle for seq
+;; maybe could implement as function that wraps a func to fit into floyd-cycle
 ;; add an optional start position parameter?
 (defun floyd-seq (seq)
   "Floyd cycle detect on a sequence."
@@ -183,4 +185,48 @@
           nil))))
 
 ;; What is the largest prime factor of the number 600851475143 ?
+
+;; double precision floating point holds up to 10^308
+(defun grab-digits (r d)
+  "Grab a list of 'd' digits from rational number 'r'."
+  (num-to-list (truncate (coerce (* r (expt 10 d)) 'long-float))))
+
+;; truncate returns both sides of the decimal point
+(defun digit-grabber (r)
+  "Makes a digit streaming function for rational number 'r'."
+  (let ((internal-r r))
+    (lambda ()
+      (multiple-value-bind (d new-f) (truncate (* internal-r 10))
+        (setf internal-f new-f)
+        d))))
+
+;; scavenged divide function
+(defun divide (a b &key (precision 8))
+  (let ((frac 0))
+    (multiple-value-bind (whole remainder)
+        (floor a b)
+      (unless (zerop remainder)
+        (dotimes (i precision)
+          (setf remainder (* remainder 10))
+          (multiple-value-bind (quot rem)
+              (floor remainder b)
+            (setf frac (+ (* frac 10) quot))
+            (when (zerop rem) (return))
+            (setf remainder rem))))
+      (values whole frac))))
+
+(defun get-frac (a b d)
+  (nth-value 1 (divide a b :precision d)))
+
+(defun reciprocal-cycles (&key (precision 500))
+  "Crunch up to 1/d below d=1000 and check for largest cycle in decimal digits."
+  (let ((length 0)
+        (longest-d 0))
+    (loop for i from 1 below 1000
+       for cyc = (floyd-seq (num-to-list (get-frac 1 i precision))) do
+         (when (> cyc length)
+           (progn (setf length cyc)
+                  (setf longest-d i))))
+    (values longest-d length)))
+
 
