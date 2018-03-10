@@ -117,14 +117,14 @@
          (setf lam (1+ lam)))
     (values lam mu)))
 
-;; maybe could implement as function that wraps a func to fit into floyd-cycle
+;; maybe could implement as wrapper for a func to fit into floyd-cycle
 ;; add an optional start position parameter?
 (defun floyd-seq (seq)
   "Floyd cycle detect on a sequence."
-  (let ((lam 1)
-        (mu 0)
-        (tortoise (cdr seq))
-        (hare (cdr (cdr seq))))
+  (let* ((lam 1)
+         (mu 0)
+         (tortoise (cdr seq))
+         (hare (cdr tortoise)))
     (loop while (not (eql (car tortoise) (car hare))) do
          (setf tortoise (cdr tortoise))
          (setf hare (cdr (cdr hare))))
@@ -139,6 +139,27 @@
          (setf lam (1+ lam)))
     (values lam mu)))
 
+(defun floyd-seq-longest () nil)
+
+;; don't call subseq on circular seq
+(defun cycle-seq-length (seq lam mu)
+  (let* ((inseq (subseq seq mu))
+         (cycseq (subseq inseq lam)))
+    (dotimes (i lam) nil)))
+
+;; "naive" cycle detection, space complexity proportional to lam + mu
+;; this below from Let Over Lambda
+(defun cyclic-p (l)
+  (cyclic-p-aux l (make-hash-table)))
+
+(defun cyclic-p-aux (l seen)
+  (if (consp l)
+    (or (gethash l seen)
+        (progn
+          (setf (gethash l seen) t)
+          (or (cyclic-p-aux (car l) seen)
+              (cyclic-p-aux (cdr l) seen))))))
+
 ;; setf *print-circle* t to prevent hang
 ;; don't call length on these bad boys, or try to push to it
 (defun make-circle (f lam &optional (mu 0))
@@ -151,6 +172,14 @@
   (let ((li (loop for i from x0 below mu collect (funcall f i))))
     (setf (cdr (last li)) (make-circle f lam mu))
     li))
+
+(defun straighten-rho (rho end)
+  "Returns a sequence made from an imprint of a rho sequence up to end index."
+  (let ((inrho rho)
+        (straight nil))
+    (dotimes (i end)
+      (push (pop inrho) straight))
+    (reverse straight)))
 
 (defun rho-func (rho)
   (lambda (x)
@@ -192,12 +221,13 @@
   (num-to-list (truncate (coerce (* r (expt 10 d)) 'long-float))))
 
 ;; truncate returns both sides of the decimal point
+#+nil
 (defun digit-grabber (r)
   "Makes a digit streaming function for rational number 'r'."
   (let ((internal-r r))
     (lambda ()
       (multiple-value-bind (d new-f) (truncate (* internal-r 10))
-        (setf internal-f new-f)
+        (setf internal-r new-f)
         d))))
 
 ;; scavenged divide function
@@ -218,15 +248,16 @@
 (defun get-frac (a b d)
   (nth-value 1 (divide a b :precision d)))
 
+;; 983
 (defun reciprocal-cycles (&key (precision 500))
-  "Crunch up to 1/d below d=1000 and check for largest cycle in decimal digits."
+  "Crunch up primes to 1/d below d=1000 and check for largest cycle in decimal digits."
   (let ((length 0)
         (longest-d 0))
-    (loop for i from 1 below 1000
-       for cyc = (floyd-seq (num-to-list (get-frac 1 i precision))) do
+    (loop for x in (primes-below 1000)
+          for cyc = (floyd-seq (num-to-list (get-frac 1 x precision))) do
          (when (> cyc length)
            (progn (setf length cyc)
-                  (setf longest-d i))))
+                  (setf longest-d x))))
     (values longest-d length)))
 
 
