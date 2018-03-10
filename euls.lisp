@@ -142,12 +142,22 @@
 (defun floyd-seq-longest () nil)
 
 ;; don't call subseq on circular seq
-(defun cycle-seq-length (seq lam mu)
+(defun cycle-seq-length (seq &optional lam mu)
+  "Returns the length of the cycling portion of a sequence's values."
+  (when (cyclic-p seq)
+    (error "~a is a circular sequence." seq))
+  (when (or (null lam) (null mu))
+    (multiple-value-setq (lam mu) (floyd-seq seq)))
   (let* ((inseq (subseq seq mu))
          (cycseq (subseq inseq lam)))
-    (dotimes (i lam) nil)))
+    (make-loop cycseq)
+    (do ((i 0 (incf i)))
+        ((or (null inseq)
+             (/= (pop cycseq) (pop inseq)))
+         i))))
 
 ;; "naive" cycle detection, space complexity proportional to lam + mu
+;; detects cycle by reference not value
 ;; this below from Let Over Lambda
 (defun cyclic-p (l)
   (cyclic-p-aux l (make-hash-table)))
@@ -161,7 +171,10 @@
               (cyclic-p-aux (cdr l) seen))))))
 
 ;; setf *print-circle* t to prevent hang
-;; don't call length on these bad boys, or try to push to it
+;; don't call length, subseq, or try to push to it
+(defun make-loop (seq)
+  (setf (cdr (last seq)) seq))
+
 (defun make-circle (f lam &optional (mu 0))
   (let ((lo (loop for i from mu below (+ lam mu) collect (funcall f i))))
     (setf (cdr (last lo)) lo)))
