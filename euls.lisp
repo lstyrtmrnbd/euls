@@ -1,5 +1,5 @@
 ;;;; Some of this is useful for Project Euler
-;;;; some of it is not at all
+;;;; Some of it is not at all
 
 ;;; General Notes
 ;;; The expression (values) returns zero values. This is the standard idiom for returning no values from a function.
@@ -305,3 +305,18 @@
   (if (= n 0)
       1
       (* n (factorial (- n 1)))))
+
+(defun evenly-divisible-by-all (num n)
+  "Checks that 'num' is evenly divisible by all integers up to 'n'."
+  (loop for i from 1 to n do
+       (unless (= (mod num i) 0)
+         (return-from evenly-divisible-by-all nil)))
+  t)
+
+(defun smallest-multiple ()
+  "What is the smallest positive number that is evenly divisible by all of the numbers from 1 to 20?"
+  (let ((i 1))
+    (loop
+       (if (not (evenly-divisible-by-all i 20))
+           (incf i)
+           (return i)))))
