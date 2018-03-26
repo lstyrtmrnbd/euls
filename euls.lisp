@@ -282,9 +282,26 @@
          (off (if (evenp (length numli))
                   0
                   1))
-         (mid (-  (/ (length numli) 2) off))
+         (mid  (/ (- (length numli) off) 2))
          (sub1 (subseq numli 0 mid))
-         (sub2 (subseq numli mid)))
+         (sub2 (subseq numli (+ mid off))))
     (if (equal sub1 (reverse sub2))
         t
         nil)))
+
+(defun largest-palindrome-product ()
+  "Returns the largest palindrom product of two 3-digit numbers"
+  (let ((largest 0)
+        (test 0))
+    (loop for j from 100 to 999 do
+         (loop for i from 100 to 999 do
+              (setf test (* i j))
+              (when (palindromep test)
+                (when (> test largest)
+                  (setf largest test)))))
+    largest))
+
+(defun factorial (n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
