@@ -1,7 +1,8 @@
 ;;;; Some of this is useful for Project Euler
 ;;;; some of it is not at all
 
-;; The expression (values) returns zero values. This is the standard idiom for returning no values from a function.
+;;; General Notes
+;;; The expression (values) returns zero values. This is the standard idiom for returning no values from a function.
 
 ;; n times
 (defun sum-mod-3-5 (n)
@@ -50,6 +51,7 @@
                            list
                            (parse-sieve (eratosthenes (1+ n))))))))
 
+;; first exp after the 'or' is to account for negatives
 (defun num-to-list (n)
   (map 'list (lambda (c) (or (digit-char-p c) '-)) (prin1-to-string n))) 
 
@@ -139,6 +141,7 @@
          (setf lam (1+ lam)))
     (values lam mu)))
 
+;; need to continue detecting cycle until the longest cycle length
 (defun floyd-seq-longest () nil)
 
 ;; don't call subseq on circular seq
@@ -273,4 +276,15 @@
                   (setf longest-d x))))
     (values longest-d length)))
 
-
+(defun palindromep (num)
+  "Is num palindromic? eg. 9009, 99, 8118"
+  (let* ((numli (num-to-list num))
+         (off (if (evenp (length numli))
+                  0
+                  1))
+         (mid (-  (/ (length numli) 2) off))
+         (sub1 (subseq numli 0 mid))
+         (sub2 (subseq numli mid)))
+    (if (equal sub1 (reverse sub2))
+        t
+        nil)))
